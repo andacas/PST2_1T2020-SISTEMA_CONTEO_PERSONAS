@@ -1,8 +1,10 @@
 import cap as cap
 import  numpy as np
 import cv2
+import requests
 def intentar_ingresar():
 	print("se esta abriendo la entrada ")
+
 def intentar_salir():
 	print("se esta abriendo la salida")
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
