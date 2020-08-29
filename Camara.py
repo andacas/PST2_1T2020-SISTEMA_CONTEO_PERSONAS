@@ -2,17 +2,75 @@ import cap as cap
 import  numpy as np
 import cv2
 import requests
+import serial, time
+import datetime
+arduino = serial.Serial("COM3", 9600)
+payload ={'id':1}
+time.sleep(2)
 def intentar_ingresar():
-	print("se esta abriendo la entrada ")
+	r = requests.get("https://trabajocastro4.000webhostapp.com/cantidad_python.php", params=payload)
+	print(r.text)
+	if(r.text =="verdad"):
+		arduino.write(b'I')
+		arduino.write(b'D')
+		tiempo = datetime.datetime.now()
+		tiempo = tiempo.replace(minute=0, second=0, microsecond=0)
+		print(tiempo)
+
+		payload2 = {'id': 1,'fecha':tiempo}
+		r2 = requests.get("https://trabajocastro4.000webhostapp.com/revisar_informe.php", params=payload2)
+		print(r2.text)
+
+		if(r2.text == "no existe"):
+			payload3 = {'id': 1, 'fecha': tiempo}
+			r3 = requests.get("https://trabajocastro4.000webhostapp.com/crear_informes_vacios.php", params=payload3)
+			print(r3.text)
+
+		payload4 = {'id': 1, 'fecha': tiempo}
+		r4 = requests.get("https://trabajocastro4.000webhostapp.com/ingreso_por_id.php", params=payload4)
+		print(r4.text)
+	else:
+		arduino.write(b'F')
+	r = requests.get("https://trabajocastro4.000webhostapp.com/cantidad_python.php", params=payload)
+	print(r.text)
+	if (r.text == "verdad"):
+		arduino.write(b'D')
+	else:
+		arduino.write(b'F')
+
+
+
+
 
 def intentar_salir():
-	print("se esta abriendo la salida")
+	arduino.write(b'S')
+	arduino.write(b'D')
+	tiempo = datetime.datetime.now()
+	tiempo = tiempo.replace(minute=0, second=0, microsecond=0)
+	print(tiempo)
+
+	payload2 = {'id': 1, 'fecha': tiempo}
+	r2 = requests.get("https://trabajocastro4.000webhostapp.com/revisar_informe.php", params=payload2)
+	print(r2.text)
+	if (r2.text == "no existe"):
+		payload3 = {'id': 1, 'fecha': tiempo}
+		r3 = requests.get("https://trabajocastro4.000webhostapp.com/crear_informes_vacios.php", params=payload3)
+		print(r3.text)
+	payload4 = {'id': 1, 'fecha': tiempo}
+	r4 = requests.get("https://trabajocastro4.000webhostapp.com/salida_por_id.php", params=payload4)
+	print(r4.text)
+
+
+
+
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
 cap = cv2.VideoCapture(1)
 cap2 = cv2.VideoCapture(0)
 hay_elementos_1 = False
 hay_elementos_2 = False
+contar_cuadros_1=0;
+contar_cuadros_2 = 0;
 while True:
 	ret, img = cap.read()
 	gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -27,7 +85,12 @@ while True:
 			cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
 			hay_elementos_1 = True
 	if(hay_elementos_1):
+		contar_cuadros_1 += 1
+		if(contar_cuadros_1>=30):
 			intentar_ingresar()
+			contar_cuadros_1 = 0
+	else:
+		contar_cuadros_1 = 0
 	cv2.imshow('img',img)
 	k = cv2.waitKey(30) & 0xff
 	if k ==27:
@@ -46,8 +109,14 @@ while True:
 		for (ex, ey, ew, eh) in eyes2:
 			cv2.rectangle(roi_color2, (ex, ey), (ex + ew, ey + eh), (0, 255, 0), 2)
 			hay_elementos_2 = True
-		if (hay_elementos_2):
-			intentar_salir()
+			if (hay_elementos_2):
+				contar_cuadros_2 += 1
+				if (contar_cuadros_2 >= 30):
+					print("salir")
+					intentar_salir()
+					contar_cuadros_2 = 0
+			else:
+				contar_cuadros_2 = 0
 	cv2.imshow('img2', img2)
 	k = cv2.waitKey(30) & 0xff
 	if k == 27:
