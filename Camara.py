@@ -4,35 +4,46 @@ import cv2
 import requests
 import serial, time
 import datetime
+#inicializar arduino
 arduino = serial.Serial("COM3", 9600)
+
+#variable para hacer el query
 payload ={'id':1}
 time.sleep(2)
+
+#metodo que intenta acceder a la base de datos validando que se puede ingresar al local especifico: si se puede entrar se actualiza la cantidad de personas en la base de datos
 def intentar_ingresar():
 	r = requests.get("https://trabajocastro4.000webhostapp.com/cantidad_python.php", params=payload)
-	print(r.text)
+	#print(r.text)
 	if(r.text =="verdad"):
 		arduino.write(b'I')
 		arduino.write(b'D')
 		tiempo = datetime.datetime.now()
 		tiempo = tiempo.replace(minute=0, second=0, microsecond=0)
-		print(tiempo)
+		#print(tiempo)
 
+		#preguntar si en la base de datos existe el informe a esa hora , en caso de no existir se crea uno
 		payload2 = {'id': 1,'fecha':tiempo}
 		r2 = requests.get("https://trabajocastro4.000webhostapp.com/revisar_informe.php", params=payload2)
-		print(r2.text)
+		#print(r2.text)
 
 		if(r2.text == "no existe"):
 			payload3 = {'id': 1, 'fecha': tiempo}
 			r3 = requests.get("https://trabajocastro4.000webhostapp.com/crear_informes_vacios.php", params=payload3)
-			print(r3.text)
+			#print(r3.text)
 
+		#incrementar el numero de personas que han ingresado
 		payload4 = {'id': 1, 'fecha': tiempo}
 		r4 = requests.get("https://trabajocastro4.000webhostapp.com/ingreso_por_id.php", params=payload4)
-		print(r4.text)
+		#print(r4.text)
+
+	#en caso de que no se puede ingresar por numero de personas se cambia estado del arduino
 	else:
 		arduino.write(b'F')
+
+	#se vuelve a preguntar si se puede ingresar para actualizar el estado del arduino
 	r = requests.get("https://trabajocastro4.000webhostapp.com/cantidad_python.php", params=payload)
-	print(r.text)
+	#print(r.text)
 	if (r.text == "verdad"):
 		arduino.write(b'D')
 	else:
@@ -41,28 +52,32 @@ def intentar_ingresar():
 
 
 
-
+#metodo que intenta acceder a la base de datos validando que existe a esa hora un informe para un local especifico: si existe actualiza la cantidad de personas en la base de datos
 def intentar_salir():
+	#cambiar estado del arduino para salir y que esta disponible para ingreso
 	arduino.write(b'S')
 	arduino.write(b'D')
 	tiempo = datetime.datetime.now()
 	tiempo = tiempo.replace(minute=0, second=0, microsecond=0)
-	print(tiempo)
-
+	#print(tiempo)
+	#preguntar si existe informe a esa hora para el local
 	payload2 = {'id': 1, 'fecha': tiempo}
 	r2 = requests.get("https://trabajocastro4.000webhostapp.com/revisar_informe.php", params=payload2)
-	print(r2.text)
+	#print(r2.text)
+	#si no existe se crea un informe a esa hora
 	if (r2.text == "no existe"):
 		payload3 = {'id': 1, 'fecha': tiempo}
 		r3 = requests.get("https://trabajocastro4.000webhostapp.com/crear_informes_vacios.php", params=payload3)
-		print(r3.text)
+		#print(r3.text)
+	#se reduce la cantidad que esta actualmente en el local
 	payload4 = {'id': 1, 'fecha': tiempo}
 	r4 = requests.get("https://trabajocastro4.000webhostapp.com/salida_por_id.php", params=payload4)
-	print(r4.text)
+	#print(r4.text)
 
 
 
-
+#se hace uso de haarcascade para detectar una cara de frente con los ojos si estan los unos un tiempo definido por los contadores, cuando se cumple ese tiempo se
+# ejecutan las funciones de intento entrar y de intento salir dependiendo de la camara que esta reconociendo la cara
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
 cap = cv2.VideoCapture(1)
@@ -87,6 +102,7 @@ while True:
 	if(hay_elementos_1):
 		contar_cuadros_1 += 1
 		if(contar_cuadros_1>=30):
+			print("entrar.....")
 			intentar_ingresar()
 			contar_cuadros_1 = 0
 	else:
@@ -112,7 +128,7 @@ while True:
 			if (hay_elementos_2):
 				contar_cuadros_2 += 1
 				if (contar_cuadros_2 >= 30):
-					print("salir")
+					print("salir.....")
 					intentar_salir()
 					contar_cuadros_2 = 0
 			else:
