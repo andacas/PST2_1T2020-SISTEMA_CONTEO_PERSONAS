@@ -3,6 +3,8 @@ proyecto para la materia de progamacion de sistemas telematicos
 
 video de ejemplo: https://youtu.be/Gk2tC4OCkdI 
 
+pagina de ejemplo: https://trabajocastro4.000webhostapp.com/index.html
+
 materiales: 
 1-arduino uno
 2-servomotores
