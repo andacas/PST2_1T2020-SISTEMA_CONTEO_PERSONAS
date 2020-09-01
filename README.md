@@ -12,3 +12,9 @@ materiales:
 1-led verde 
 2-resistencias de 220 ohms 
 2-camaras web
+
+En la carpeta de "Documentos Adjuntos" se encuentran 
+1.- Manual ejecutivo 
+2.- Manual de usuario
+3.- link al video de funcionamiento del proyecto
+4.- Diapositivas correspondientes 
